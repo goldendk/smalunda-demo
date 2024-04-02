@@ -62,12 +62,30 @@ public class TaskRepository {
     public TaskFlowReport getTaskFlowReport(String taskFlowId) {
 
         Stream<Task> targetFlowStream = tasks.stream().filter(t -> t.getFlowId().equals(taskFlowId));
-        Map<TaskState, List<Integer>> collect = targetFlowStream.collect(Collectors
-                .groupingBy(Task::getState, Collectors.mapping(Task::getId, Collectors.toList())));
 
-        return new TaskFlowReport(taskFlowId, collect.getOrDefault(TaskState.INITIAL, Collections.emptyList()),
-                collect.getOrDefault(TaskState.IN_PROGRESS, Collections.emptyList()),
-                collect.getOrDefault(TaskState.RETRYING, Collections.emptyList()));
+        Map<TaskDef, TaskReportBuilder> taskReportBuilders = new HashMap<>();
+
+        targetFlowStream.forEach(t -> {
+            taskReportBuilders.computeIfAbsent(t.getTaskDef(), (key) ->
+                    TaskReportBuilder.builder()
+                            .taskId(t.getTaskDef().id())
+                            .initial(new ArrayList<>())
+                            .retrying(new ArrayList<>())
+                            .running(new ArrayList<>()));
+            if (t.getState() == TaskState.INITIAL) {
+                taskReportBuilders.get(t.getTaskDef()).initial().add(t.getId());
+            } else if (t.getState() == TaskState.IN_PROGRESS) {
+                taskReportBuilders.get(t.getTaskDef()).running().add(t.getId());
+            } else if (t.getState() == TaskState.RETRYING) {
+                taskReportBuilders.get(t.getTaskDef()).retrying().add(t.getId());
+            }
+
+        });
+
+
+        List<TaskReport> taskReports = taskReportBuilders.values().stream().map(b -> b.build()).collect(Collectors.toList());
+
+        return new TaskFlowReport(taskFlowId, taskReports);
 
     }
 }

@@ -32,6 +32,7 @@ public class TaskConfiguration {
 
 
         TaskFlow exampleTaskFlow = TaskFlow.newFlow().flowId(TaskConstants.EXAMPLE_TASK_FLOW_ID)
+                .rootTask(taskA)
                 .addTaskBranch(new TaskBranch(taskA, (t) -> true, taskB))
                 .addTaskBranch(new TaskBranch(taskB, (t) -> true, taskC))
                 .addTaskBranch(new TaskBranch(taskB, (t) -> true, taskD))

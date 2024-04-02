@@ -91,6 +91,7 @@ public class TaskFlowBpmnBuilder {
         TaskDef aDef = new TaskDef("A");
         TaskDef bDef = new TaskDef("B");
         TaskFlow test_flow = TaskFlow.newFlow().flowId("test_flow")
+                .rootTask(aDef)
                 .addTaskBranch(new TaskBranch(aDef, (t) -> true, bDef))
                 .build();
         String s = builder.convertToBpmn(test_flow);

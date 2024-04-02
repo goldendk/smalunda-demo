@@ -2,7 +2,6 @@ package com.example.smalundademo.tasks;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Interface representing a flow of tasks. A flow of tasks is another work for 'work-flow'.
@@ -21,6 +20,7 @@ import java.util.stream.Collectors;
  *         <li>First taskBranch added is always the starting point of the flow.</li>
  *         <li>All task flows must have a single task to start with. It cannot start with parallel split from start node.</li>
  *         <li>The flow is defined as left-to-right. So taskBranches should be added in this way.</li>
+ *         <li>No 'looping' is allowed.</li>
  *     </ul>
  *
  * <p>
@@ -38,11 +38,14 @@ import java.util.stream.Collectors;
  *         D--&gt;E--&gt;o
  * </pre>
  */
-public record TaskFlow(String flowId, List<TaskBranch> branchList) {
+public record TaskFlow(String flowId, TaskDef rootTask, List<TaskBranch> branchList) {
 
     public TaskFlow {
         if (flowId == null) {
             throw new IllegalArgumentException("flowId must not set");
+        }
+        if(rootTask == null){
+            throw new IllegalArgumentException("rootTask cannot be null");
         }
         if (branchList == null || branchList.isEmpty()) {
             throw new IllegalArgumentException("branchList cannot be null or empty");
@@ -67,6 +70,7 @@ public record TaskFlow(String flowId, List<TaskBranch> branchList) {
         private TaskDef rootTask;
         private List<TaskBranch> taskBranches = new ArrayList<>();
         private RequireFlowIdFact requireFlowIdFact = new RequireFlowIdFact();
+        private RequireRootTaskFact requireRootTaskFact = new RequireRootTaskFact();
         private String flowId;
 
         public TaskFlowFactory addTaskBranch(TaskBranch taskBranch) {
@@ -75,14 +79,20 @@ public record TaskFlow(String flowId, List<TaskBranch> branchList) {
         }
 
         public TaskFlow build() {
-            return new TaskFlow(this.flowId, taskBranches);
+            return new TaskFlow(this.flowId, rootTask, taskBranches);
         }
 
+        public class RequireRootTaskFact{
+            public TaskFlowFactory rootTask(TaskDef rootTask){
+                TaskFlowFactory.this.rootTask = rootTask;
+                return TaskFlowFactory.this;
+            }
+        }
 
         public class RequireFlowIdFact {
-            public TaskFlowFactory flowId(String flowId) {
+            public RequireRootTaskFact flowId(String flowId) {
                 TaskFlowFactory.this.flowId = flowId;
-                return TaskFlowFactory.this;
+                return TaskFlowFactory.this.requireRootTaskFact;
             }
         }
 

@@ -13,6 +13,7 @@ class TaskFlowTest {
         TaskDef taskC = new TaskDef("C");
 
         TaskFlow taskFlow = TaskFlow.newFlow().flowId(TaskConstants.EXAMPLE_TASK_FLOW_ID)
+                .rootTask(taskA)
                 .addTaskBranch(
                         TaskBranchBuilder.builder()
                                 .from(taskA)
